@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Miyagical Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ─────────────────────────────────────────────
+       DESIGN TOKENS  ←  tweak colours/fonts here
+    ───────────────────────────────────────────── */
+    :root {
+      --bg:        #f0f2f5;
+      --bg2:       #1e2535;
+      --surface:   #ffffff;
+      --border:    #d0d5de;
+      --accent:    #2a3a5c;
+      --accent-lt: #4a6fa5;
+      --text:      #1e2535;
+      --text-muted:#6b7280;
+      --text-head: #ffffff;
+      --shadow:    rgba(0,0,0,.15);
+      --cover-bg:  #2a3a5c;
+      --font-head: 'Playfair Display', Georgia, serif;
+      --font-body: 'Lato', sans-serif;
+    }
+
+    /* ─── RESET ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-weight: 400;
+      min-height: 100vh;
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      background: var(--bg2);
+      border-bottom: 3px solid var(--accent-lt);
+      padding: 2rem 2rem 1.8rem;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header h1 {
+      font-family: var(--font-head);
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      color: var(--text-head);
+      letter-spacing: .04em;
+      font-weight: 700;
+    }
+    header h1 span { font-style: italic; color: #8fb3e8; }
+    .tagline {
+      font-size: .95rem;
+      color: #9aaccc;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-top: .4rem;
+    }
+
+    /* ─── CONTROLS (search + genre filters) ─── */
+    .controls {
+      max-width: 960px;
+      margin: 1.6rem auto 0;
+      padding: 0 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: .9rem;
+      align-items: center;
+    }
+    #search {
+      width: 100%;
+      max-width: 540px;
+      padding: .7rem 1.3rem;
+      background: #fff;
+      border: 1px solid #8899bb;
+      border-radius: 3px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    #search::placeholder { color: #9aaccc; }
+    #search:focus { border-color: #8fb3e8; box-shadow: 0 0 0 3px rgba(143,179,232,.25); }
+
+    .filters { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center; }
+    .filter-btn {
+      padding: .38rem 1rem;
+      background: transparent;
+      border: 1px solid #566888;
+      border-radius: 3px;
+      color: #9aaccc;
+      font-family: var(--font-body);
+      font-size: .85rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all .18s;
+    }
+    .filter-btn:hover  { border-color: #8fb3e8; color: #fff; }
+    .filter-btn.active { background: #fff; border-color: #fff; color: var(--bg2); font-weight: 700; }
+
+    /* ─── BOOK GRID ─── */
+    .grid-wrap {
+      max-width: 1280px;
+      margin: 2.5rem auto;
+      padding: 0 1.5rem 4rem;
+    }
+    .section-label {
+      font-family: var(--font-body);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: .55rem;
+      margin-bottom: 1.8rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+      gap: 1.8rem 1.3rem;
+    }
+
+    /* ─── BOOK CARD ─── */
+    .book {
+      display: flex;
+      flex-direction: column;
+      gap: .65rem;
+      cursor: pointer;
+      position: relative;
+      text-decoration: none;
+      transition: transform .25s;
+    }
+    .book:hover { transform: translateY(-6px) rotate(.4deg); }
+
+    .cover-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 2/3;
+      border-radius: 2px 5px 5px 2px;
+      overflow: hidden;
+      background: var(--cover-bg);
+      border: 1px solid #c0c8d8;
+      box-shadow: -4px 4px 0 #b0b8c8, 4px 6px 20px var(--shadow);
+    }
+    .cover-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: filter .3s;
+    }
+    .book:hover .cover-wrap img { filter: brightness(1.06); }
+
+    /* placeholder when no cover image yet */
+    .cover-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: .9rem;
+      text-align: center;
+      gap: .5rem;
+      background: linear-gradient(160deg, #2a3a5c 0%, #1e2535 100%);
+    }
+    .cover-placeholder .ph-title {
+      font-family: var(--font-head);
+      font-size: .82rem;
+      color: #8fb3e8;
+      line-height: 1.35;
+    }
+    .cover-placeholder .ph-author {
+      font-size: .72rem;
+      color: #6b7fa0;
+    }
+
+    /* book meta below cover */
+    .book-meta { padding: 0 .1rem; }
+    .book-meta .title {
+      font-family: var(--font-head);
+      font-size: .88rem;
+      color: var(--accent);
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 700;
+    }
+    .book-meta .author {
+      font-size: .78rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* hidden = filtered out */
+    .book.hidden { display: none; }
+
+    /* ─── EMPTY STATE ─── */
+    #empty {
+      display: none;
+      text-align: center;
+      padding: 4rem 1rem;
+      color: var(--text-muted);
+      font-family: var(--font-head);
+      font-style: italic;
+      font-size: 1.15rem;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      border-top: 2px solid var(--border);
+      color: var(--text-muted);
+      font-size: .8rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      background: #e4e8f0;
+    }
+
+    @media (max-width: 480px) {
+      .grid { grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); gap: 1rem .8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════
+     HEADER  — change the library name here
+═════════════════════════════════════════════ -->
+<header>
+  <h1>The <span>Miyagical</span> Library</h1>
+  <p class="tagline">A personal collection of books</p>
+
+  <div class="controls">
+    <input id="search" type="search" placeholder="Search by title or author…" autocomplete="off" />
+    <div class="filters" id="filters">
+      <!-- Genre buttons are built automatically from data-genre attributes on each book card.
+           You never need to edit this div — just add data-genre="…" to your book cards. -->
+    </div>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════════
+     BOOK GRID
+═════════════════════════════════════════════ -->
+<main class="grid-wrap">
+
+  <!-- This label updates automatically: "3 books on the shelf", "1 book on the shelf", etc.
+       It reflects the current filter/search result — no manual editing needed. -->
+  <p class="section-label" id="shelf-label">Loading…</p>
+
+  <div class="grid" id="grid">
+
+    <!-- ┌─────────────────────────────────────────────────────────────┐
+         │  HOW TO ADD A BOOK — copy one of the blocks below, then:   │
+         │                                                             │
+         │  1. href        → your miyagical.github.io/REPO-NAME/ URL  │
+         │  2. data-title  → exact title (used by search)             │
+         │  3. data-author → author name (used by search)             │
+         │  4. data-genre  → one word: fiction / history / horror etc │
+         │                   (a filter button appears automatically)   │
+         │  5. Cover image:                                            │
+         │     • Drop the first-page image in the covers/ folder      │
+         │     • Replace <div class="cover-placeholder">…</div>       │
+         │       with  <img src="covers/your-file.jpg" alt="Title">   │
+         └─────────────────────────────────────────────────────────────┘ -->
+
+
+    <!-- ═══════════════════════════════════════
+         ★  BOOK #1  —  Dr Jekyll & Mr Hyde
+         URL: https://miyagical.github.io/Strange-Case-of-Dr-Jekyll-and-Mr-Hyde/?page=1
+    ════════════════════════════════════════ -->
+    <a class="book"
+       href="https://miyagical.github.io/Strange-Case-of-Dr-Jekyll-and-Mr-Hyde/?page=1"
+       data-title="Strange Case of Dr Jekyll and Mr Hyde"
+       data-author="Robert Louis Stevenson"
+       data-genre="horror"
+       target="_blank" rel="noopener">
+      <div class="cover-wrap">
+        <!-- ▼ COVER IMAGE — replace this whole <div> once you have the file:
+             <img src="covers/jekyll-hyde.jpg" alt="Strange Case of Dr Jekyll and Mr Hyde"> -->
+        <div class="cover-placeholder">
+          <span class="ph-title">Strange Case of Dr Jekyll &amp; Mr Hyde</span>
+          <span class="ph-author">R. L. Stevenson</span>
+        </div>
+      </div>
+      <div class="book-meta">
+        <div class="title">Dr Jekyll &amp; Mr Hyde</div>
+        <div class="author">Robert Louis Stevenson</div>
+      </div>
+    </a>
+
+
+    <!-- ═══════════════════════════════════════
+         ★  BOOK #2  —  Animal Farm
+         URL: https://miyagical.github.io/AnimalFarm/
+    ════════════════════════════════════════ -->
+    <a class="book"
+       href="https://miyagical.github.io/AnimalFarm/"
+       data-title="Animal Farm"
+       data-author="George Orwell"
+       data-genre="fiction"
+       target="_blank" rel="noopener">
+      <div class="cover-wrap">
+        <!-- ▼ COVER IMAGE — replace this whole <div> once you have the file:
+             <img src="covers/animal-farm.jpg" alt="Animal Farm"> -->
+        <div class="cover-placeholder">
+          <span class="ph-title">Animal Farm</span>
+          <span class="ph-author">George Orwell</span>
+        </div>
+      </div>
+      <div class="book-meta">
+        <div class="title">Animal Farm</div>
+        <div class="author">George Orwell</div>
+      </div>
+    </a>
+
+
+    <!-- ═══════════════════════════════════════
+         ★  BOOK #3  —  Europe's History
+         URL: https://miyagical.github.io/Europe-s-History/
+    ════════════════════════════════════════ -->
+    <a class="book"
+       href="https://miyagical.github.io/Europe-s-History/"
+       data-title="Europe's History"
+       data-author="Unknown"
+       data-genre="history"
+       target="_blank" rel="noopener">
+      <div class="cover-wrap">
+        <!-- ▼ COVER IMAGE — replace this whole <div> once you have the file:
+             <img src="covers/europes-history.jpg" alt="Europe's History"> -->
+        <div class="cover-placeholder">
+          <span class="ph-title">Europe's History</span>
+          <span class="ph-author">Unknown</span>
+        </div>
+      </div>
+      <div class="book-meta">
+        <div class="title">Europe's History</div>
+        <div class="author">Unknown</div>
+      </div>
+    </a>
+
+
+    <!-- ══════════════════════════════════════════════════════════════
+         ▼▼▼  ADD MORE BOOKS BELOW THIS LINE  ▼▼▼
+
+         Template to copy — paste it here and fill in the blanks:
+
+    <a class="book"
+       href="https://miyagical.github.io/YOUR-REPO-NAME/"
+       data-title="Full Book Title"
+       data-author="Author Name"
+       data-genre="GENRE"
+       target="_blank" rel="noopener">
+      <div class="cover-wrap">
+        <div class="cover-placeholder">
+          <span class="ph-title">Full Book Title</span>
+          <span class="ph-author">Author Name</span>
+        </div>
+      </div>
+      <div class="book-meta">
+        <div class="title">Short Display Title</div>
+        <div class="author">Author Name</div>
+      </div>
+    </a>
+
+         Once you have the cover image ready, swap the placeholder:
+         Delete the <div class="cover-placeholder">…</div> block, then add:
+         <img src="covers/your-filename.jpg" alt="Book Title">
+
+         GENRES in use so far (add new ones freely — buttons appear automatically):
+           horror · fiction · history
+
+    ▲▲▲  END OF ADD-MORE-BOOKS SECTION  ▲▲▲
+    ══════════════════════════════════════════════════════════════ -->
+
+  </div><!-- /.grid -->
+
+  <p id="empty">No books match your search.</p>
+</main>
+
+<footer>Miyagical Library &nbsp;·&nbsp; Personal Collection</footer>
+
+
+<!-- ════════════════════════════════════════════
+     JAVASCRIPT  —  search, genre filtering & shelf count
+     (no changes needed here)
+═════════════════════════════════════════════ -->
+<script>
+  const grid       = document.getElementById('grid');
+  const search     = document.getElementById('search');
+  const filtersEl  = document.getElementById('filters');
+  const empty      = document.getElementById('empty');
+  const shelfLabel = document.getElementById('shelf-label');
+
+  // Build genre filter buttons automatically from data-genre attributes
+  const books  = Array.from(grid.querySelectorAll('.book'));
+  const genres = ['all', ...new Set(books.map(b => b.dataset.genre).filter(Boolean).sort())];
+
+  genres.forEach(g => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn' + (g === 'all' ? ' active' : '');
+    btn.textContent = g === 'all' ? 'All' : g.charAt(0).toUpperCase() + g.slice(1);
+    btn.dataset.genre = g;
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      applyFilters();
+    });
+    filtersEl.appendChild(btn);
+  });
+
+  function updateLabel(count) {
+    const genre = document.querySelector('.filter-btn.active')?.dataset.genre ?? 'all';
+    const q     = search.value.trim();
+    let prefix  = '';
+
+    if (q) {
+      prefix = `${count} ${count === 1 ? 'result' : 'results'} for "${q}"`;
+    } else if (genre === 'all') {
+      prefix = `${count} ${count === 1 ? 'book' : 'books'} on the shelf`;
+    } else {
+      const label = genre.charAt(0).toUpperCase() + genre.slice(1);
+      prefix = `${count} ${count === 1 ? 'book' : 'books'} on the ${label} shelf`;
+    }
+    shelfLabel.textContent = prefix;
+  }
+
+  function applyFilters() {
+    const q     = search.value.trim().toLowerCase();
+    const genre = document.querySelector('.filter-btn.active')?.dataset.genre ?? 'all';
+    let visible = 0;
+
+    books.forEach(book => {
+      const title  = (book.dataset.title  || '').toLowerCase();
+      const author = (book.dataset.author || '').toLowerCase();
+      const bg     = book.dataset.genre   || '';
+      const matchQ = !q || title.includes(q) || author.includes(q);
+      const matchG = genre === 'all' || bg === genre;
+
+      if (matchQ && matchG) { book.classList.remove('hidden'); visible++; }
+      else                  { book.classList.add('hidden'); }
+    });
+
+    empty.style.display = visible === 0 ? 'block' : 'none';
+    updateLabel(visible);
+  }
+
+  search.addEventListener('input', applyFilters);
+
+  // Run once on page load to set the initial label
+  applyFilters();
+</script>
+
+</body>
+</html>
